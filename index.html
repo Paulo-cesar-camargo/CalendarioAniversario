@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CALENDARIO DE ANIVERSÁRIOS</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<style>
+  body { font-family: Arial; margin:0; padding:10px; background:#121212; color:#eee; }
+  h1 { text-align:center; color:#0abde3; margin-top:20px; }
+  form { background:#222; padding:15px; border-radius:12px; margin-bottom:20px; }
+  label { display:block; margin-top:10px; font-weight:bold; }
+  input, textarea { width:100%; padding:10px; border-radius:8px; border:none; margin-top:5px; background:#333; color:#eee; font-size:14px; }
+  button { margin-top:15px; padding:12px 20px; border:none; border-radius:8px; background:#0abde3; color:#111; cursor:pointer; }
+  .cards-container { display:flex; flex-wrap:wrap; gap:15px; justify-content:center; }
+
+  .card {
+    width: 250px; height: 250px;
+    background: linear-gradient(135deg,#ca4ce9,#176ea8);
+    border-radius:16px; color:#111; text-align:center;
+    padding:10px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    transform: scale(0); transition: transform 0.5s ease; position: relative;
+    box-shadow: 0 8px 15px rgba(0,0,0,0.3);
+  }
+  .card img { width:100px; height:100px; object-fit:cover; margin-bottom:10px; border-radius:50%; border:2px solid #fff; box-shadow:0 4px 10px rgba(0,0,0,0.3); }
+  .card h3 { margin:5px 0; font-size:18px; font-weight:bold; color:#fff; text-shadow:1px1px5px rgba(0,0,0,0.7); }
+  .card p { margin:5px 0; font-size:14px; color:#fff; text-shadow:1px1px3px rgba(0,0,0,0.5); }
+  .card .actions { margin-top:8px; display:flex; gap:5px; justify-content:center; }
+  .edit-btn { background:#ffa502; color:#111; border-radius:6px; padding:5px; cursor:pointer; }
+  .download-btn { background:#9b59b6; color:#fff; border-radius:6px; padding:5px; cursor:pointer; }
+  .delete-btn { background:#ff3f34; color:#fff; border-radius:6px; padding:5px; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<h1><i class="fa-solid fa-bolt"></i>CALENDÁRIO DE ANIVERSÁRIO <i class="fa-solid fa-bolt"></i></h1>
+
+<form id="cadastroForm">
+  <input type="hidden" id="editIndex">
+  <label>Nome</label>
+  <input type="text" id="nome" required>
+  <label>Número WhatsApp</label>
+  <input type="text" id="numero" required>
+  <label>Mensagem</label>
+  <textarea id="mensagem" rows="3" required></textarea>
+  <label>Data de aniversário (dd/mm/aaaa)</label>
+  <input type="text" id="data" required>
+  <label>Foto</label>
+  <input type="file" id="foto" accept="image/*">
+  <button type="submit"><i class="fa-solid fa-plus"></i> Salvar Cadastro</button>
+</form>
+
+<div class="cards-container" id="cardsContainer"></div>
+
+<script>
+let cadastros = JSON.parse(localStorage.getItem('cadastros')) || [];
+
+// Renderiza cards
+function renderCards(){
+  const container = document.getElementById('cardsContainer');
+  container.innerHTML = '';
+  cadastros.forEach((c,i)=>{
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      ${c.foto?'<img src="'+c.foto+'">':''}
+      <h3>${c.nome}</h3>
+      <p>${c.mensagem}</p>
+      <p>${c.data}</p>
+      <div class="actions">
+        <button class="edit-btn" onclick="editar(${i})"><i class="fa-solid fa-pen"></i> Editar</button>
+        <button class="download-btn" onclick="baixarImagem(${i})"><i class="fa-solid fa-download"></i> Baixar</button>
+        <button class="delete-btn" onclick="excluir(${i})"><i class="fa-solid fa-trash"></i> Excluir</button>
+      </div>
+    `;
+    container.appendChild(card);
+    setTimeout(()=>{ card.style.transform = 'scale(1)'; }, 100*i);
+  });
+}
+
+// Converter arquivo em base64
+function fileToBase64(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = ()=>resolve(reader.result);
+    reader.onerror = err=>reject(err);
+    reader.readAsDataURL(file);
+  });
+}
+
+// Form submit
+document.getElementById('cadastroForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const idx = document.getElementById('editIndex').value;
+  const nome = document.getElementById('nome').value.trim();
+  const numero = document.getElementById('numero').value.trim();
+  const mensagem = document.getElementById('mensagem').value.trim();
+  const data = document.getElementById('data').value.trim();
+  const fotoInput = document.getElementById('foto');
+
+  let fotoBase64='';
+  if(fotoInput.files[0]) fotoBase64 = await fileToBase64(fotoInput.files[0]);
+
+  if(idx===''){
+    cadastros.push({nome,numero,mensagem,data,foto:fotoBase64});
+  } else {
+    cadastros[idx]={nome,numero,mensagem,data,foto:fotoBase64||cadastros[idx].foto};
+    document.getElementById('editIndex').value='';
+  }
+
+  localStorage.setItem('cadastros',JSON.stringify(cadastros));
+  renderCards();
+  e.target.reset();
+});
+
+// Editar cadastro
+function editar(i){
+  const c = cadastros[i];
+  document.getElementById('editIndex').value = i;
+  document.getElementById('nome').value = c.nome;
+  document.getElementById('numero').value = c.numero;
+  document.getElementById('mensagem').value = c.mensagem;
+  document.getElementById('data').value = c.data;
+}
+
+// Excluir cadastro
+function excluir(i){
+  if(confirm('Deseja realmente excluir este card?')){
+    cadastros.splice(i,1);
+    localStorage.setItem('cadastros',JSON.stringify(cadastros));
+    renderCards();
+  }
+}
+
+// Funções de texto
+function wrapTextMeasure(ctx, text, maxWidth, fontSize){
+  ctx.font = fontSize + "px Arial";
+  const words = text.split(' ');
+  let line = '';
+  let lines = [];
+  for(let n = 0; n < words.length; n++){
+    const testLine = line + words[n] + ' ';
+    const metrics = ctx.measureText(testLine);
+    if(metrics.width > maxWidth && n > 0){
+      lines.push(line);
+      line = words[n] + ' ';
+    } else {
+      line = testLine;
+    }
+  }
+  lines.push(line);
+  return lines;
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight){
+  const words = text.split(' ');
+  let line = '';
+  for(let n = 0; n < words.length; n++){
+    const testLine = line + words[n] + ' ';
+    const metrics = ctx.measureText(testLine);
+    if(metrics.width > maxWidth && n > 0){
+      ctx.fillText(line, x, y);
+      line = words[n] + ' ';
+      y += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  ctx.fillText(line, x, y);
+}
+
+// Baixar card moderno como PNG (com espaçamento maior)
+function baixarImagem(i){
+  const cData = cadastros[i];
+  const canvas = document.createElement('canvas');
+  canvas.width = 500;
+  canvas.height = 500;
+  const ctx = canvas.getContext('2d');
+
+  // Fundo moderno
+  const grad = ctx.createLinearGradient(0,0,canvas.width,canvas.height);
+  grad.addColorStop(0,'#ff9a9e');
+  grad.addColorStop(1,'#fad0c4');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  const lines = wrapTextMeasure(ctx, cData.mensagem, 400, 28);
+
+  // Tamanho da foto e espaçamento maior
+  let fotoHeight = cData.foto ? 150 + 50 : 0; // 50px de espaço extra
+  let contentHeight = fotoHeight + 36 + lines.length * 34 + 28;
+  let startY = (canvas.height - contentHeight)/2;
+
+  function drawText(startY){
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = "center";
+
+    // Nome
+    ctx.font = "bold 36px Arial";
+    ctx.fillText(cData.nome, canvas.width/2, startY);
+    startY += 36 + 10;
+
+    // Mensagem
+    ctx.font = "28px Arial";
+    wrapText(ctx, cData.mensagem, canvas.width/2, startY, 400, 34);
+    startY += lines.length * 34 + 10;
+
+    // Data
+    ctx.font = "28px Arial";
+    ctx.fillText(cData.data, canvas.width/2, canvas.height - 50);
+
+    // Download
+    const link = document.createElement('a');
+    link.download = `card_${cData.nome}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+
+  if(cData.foto){
+    const img = new Image();
+    img.src = cData.foto;
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const radius = 75;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(canvas.width/2, startY + radius, radius, 0, Math.PI*2);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(img, canvas.width/2 - radius, startY, radius*2, radius*2);
+      ctx.restore();
+      startY += radius*2 + 50; // mais espaço entre foto e nome
+      drawText(startY);
+    };
+  } else {
+    drawText(startY);
+  }
+}
+
+// Inicializa
+renderCards();
+</script>
+
+</body>
+</html>
