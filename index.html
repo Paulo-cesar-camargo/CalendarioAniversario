@@ -40,11 +40,11 @@
   <label>Nome</label>
   <input type="text" id="nome" required>
   <label>Número WhatsApp</label>
-  <input type="text" id="numero" required>
+  <input type="text" id="numero" required autocomplete="bday">
   <label>Mensagem</label>
   <textarea id="mensagem" rows="3" required></textarea>
   <label>Data de aniversário (dd/mm/aaaa)</label>
-  <input type="text" id="data" required>
+  <input type="text" id="data" required autocomplete="bday">
   <label>Foto</label>
   <input type="file" id="foto" accept="image/*">
   <button type="submit"><i class="fa-solid fa-plus"></i> Salvar Cadastro</button>
@@ -243,3 +243,4 @@ renderCards();
 
 </body>
 </html>
+
