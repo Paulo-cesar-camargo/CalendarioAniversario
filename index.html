@@ -11,12 +11,13 @@
   form { background:#222; padding:15px; border-radius:12px; margin-bottom:20px; }
   label { display:block; margin-top:10px; font-weight:bold; }
   input, textarea { width:100%; padding:10px; border-radius:8px; border:none; margin-top:5px; background:#333; color:#eee; font-size:14px; }
+  input::placeholder, textarea::placeholder { color:#aaa; }
   button { margin-top:15px; padding:12px 20px; border:none; border-radius:8px; background:#0abde3; color:#111; cursor:pointer; }
   .cards-container { display:flex; flex-wrap:wrap; gap:15px; justify-content:center; }
 
   .card {
     width: 250px; height: 250px;
-    background: linear-gradient(135deg,#ca4ce9,#176ea8);
+    background-color: #0abde3;
     border-radius:16px; color:#111; text-align:center;
     padding:10px; display:flex; flex-direction:column; align-items:center; justify-content:center;
     transform: scale(0); transition: transform 0.5s ease; position: relative;
@@ -38,13 +39,17 @@
 <form id="cadastroForm">
   <input type="hidden" id="editIndex">
   <label>Nome</label>
-  <input type="text" id="nome" required>
+  <input type="text" id="nome" placeholder="Ex: João Silva" required>
+
   <label>Número WhatsApp</label>
-  <input type="text" id="numero" required autocomplete="off">
+  <input type="tel" id="numero" placeholder="(99) 99999-9999" pattern="\(\d{2}\)\s\d{5}-\d{4}" maxlength="15" required>
+
   <label>Mensagem</label>
-  <textarea id="mensagem" rows="3" required></textarea>
-  <label>Data de aniversário (dd/mm/aaaa)</label>
-  <input type="text" id="data" required autocomplete="off">
+  <textarea id="mensagem" rows="3" placeholder="Digite a mensagem aqui..." required></textarea>
+
+  <label>Data de aniversário</label>
+  <input type="date" id="data" required>
+
   <label>Foto</label>
   <input type="file" id="foto" accept="image/*">
   <button type="submit"><i class="fa-solid fa-plus"></i> Salvar Cadastro</button>
@@ -87,7 +92,18 @@ function fileToBase64(file){
     reader.readAsDataURL(file);
   });
 }
-
+// Máscara de telefone
+document.getElementById('numero').addEventListener('input', function(e){
+  let v = e.target.value.replace(/\D/g,'');
+  if(v.length > 11) v = v.slice(0,11);
+  if(v.length > 6){
+    e.target.value = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
+  } else if(v.length > 2){
+    e.target.value = `(${v.slice(0,2)}) ${v.slice(2)}`;
+  } else {
+    e.target.value = v;
+  }
+});
 // Form submit
 document.getElementById('cadastroForm').addEventListener('submit', async e=>{
   e.preventDefault();
@@ -243,5 +259,6 @@ renderCards();
 
 </body>
 </html>
+
 
 
